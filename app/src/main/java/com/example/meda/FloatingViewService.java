@@ -1,12 +1,16 @@
 package com.example.meda;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -20,6 +24,14 @@ public class FloatingViewService extends Service {
     private View colorPickerView;
     private boolean isFloatingViewVisible = false;
     private WindowManager.LayoutParams colorPickerParams;
+    private ImageButton pauseButton;
+    private BroadcastReceiver recordingStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean isPaused = intent.getBooleanExtra("isPaused", false);
+            updatePauseButton(isPaused);
+        }
+    };
 
 
     @Override
@@ -45,7 +57,7 @@ public class FloatingViewService extends Service {
         windowManager.addView(floatingView, params);
         LinearLayout menubar = floatingView.findViewById(R.id.menubar);
         ImageButton writeButton = floatingView.findViewById(R.id.write_button);
-        ImageButton pauseButton = floatingView.findViewById(R.id.pause_button);
+        pauseButton = floatingView.findViewById(R.id.pause_button);
         ImageButton stopButton = floatingView.findViewById(R.id.stop_button);
         menubar.setVisibility(View.VISIBLE);
         //---여기까지 메뉴바 설정 ------
@@ -236,15 +248,60 @@ public class FloatingViewService extends Service {
 //                        drawView.setVisibility(View.GONE);
 //                        isFloatingViewVisible = false;
 //                        stopSelf(); // Stop the service
-                Intent intent = new Intent("ACTION_STOP_RECORDING");
-                sendBroadcast(intent);
+                if (colorPickerView != null) {
+                    colorPickerView.setVisibility(View.GONE);
+                    drawView.clearCanvas();
+                    drawView.setVisibility(View.GONE);
+                    Intent intent = new Intent("ACTION_STOP_RECORDING");
+                    sendBroadcast(intent);
+
+                }
 
 
             }
         });
-
+        IntentFilter filter = new IntentFilter("com.example.ACTION_CHANGE_RECORDING_STATE");
+        registerReceiver(recordingStateReceiver, filter);
     }
 
+
+//    private void updatePauseButton(boolean isPaused) {
+//        // 이미지 뷰의 크기를 조정할 LayoutParams 객체 생성
+//        ViewGroup.LayoutParams params = pauseButton.getLayoutParams();
+//
+//        if (isPaused) {
+//            // 이미지를 rred로 변경하고 크기 조정
+//            pauseButton.setImageResource(R.drawable.rred);
+//
+//            // 원하는 크기로 설정 (예: 너비 50dp, 높이 50dp)
+//            int sizeInDp = 30;
+//            float scale = getResources().getDisplayMetrics().density;
+//            int sizeInPx = (int) (sizeInDp * scale + 0.5f); // dp를 픽셀로 변환
+//            params.width = sizeInPx;
+//            params.height = sizeInPx;
+//            params.gravity = Gravity.CENTER;
+//        } else {
+//            // 이미지를 ic_pause로 변경하고 원래 크기로 복원
+//            pauseButton.setImageResource(R.drawable.ic_pause);
+//
+//            // 원래 크기로 설정 (예: 원래 크기)
+//            int sizeInDp = 40;
+//            float scale = getResources().getDisplayMetrics().density;
+//            int sizeInPx = (int) (sizeInDp * scale + 0.5f); // dp를 픽셀로 변환
+//            params.width = sizeInPx;
+//            params.height = sizeInPx;
+//        }
+//
+//        // 변경된 크기 적용
+//        pauseButton.setLayoutParams(params);
+//    }
+private void updatePauseButton(boolean isPaused) {
+    if (isPaused) {
+        pauseButton.setImageResource(R.drawable.rred);
+    } else {
+        pauseButton.setImageResource(R.drawable.ic_pause);
+    }
+}
 
     @Override
 
@@ -257,6 +314,7 @@ public class FloatingViewService extends Service {
             windowManager.removeView(floatingView); // FloatingView 제거
         }
         // 다른 정리 작업 수행
+        unregisterReceiver(recordingStateReceiver);
         super.onDestroy();
     }
 }

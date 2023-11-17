@@ -170,22 +170,26 @@ public class MainActivity extends AppCompatActivity {
                 isRecordingPaused = true;
                 pausedVideoPath = currentVideoPath; // 일시정지된 파일 경로 저장
                 Toast.makeText(this, "녹화가 일시정지되었습니다.", Toast.LENGTH_SHORT).show();
+                sendRecordingStateBroadcast(isRecordingPaused);
 
-                // 이미지 변경
-//                pausebutton.setImageResource(R.drawable.record);
                 isPaused = true;
             } else {
                 // 녹화 재개
                 mMediaRecorder.resume();
                 isRecordingPaused = false;
                 Toast.makeText(this, "녹화가 재개되었습니다.", Toast.LENGTH_SHORT).show();
-
+                sendRecordingStateBroadcast(isRecordingPaused);
                 // 이미지 변경
-//                mPauseButton.setImageResource(R.drawable.ic_pause);
-                isPaused = false;
+
             }
         }
 
+    }
+
+    private void sendRecordingStateBroadcast(boolean isPaused) {
+        Intent intent = new Intent("com.example.ACTION_CHANGE_RECORDING_STATE");
+        intent.putExtra("isPaused", isPaused);
+        sendBroadcast(intent);
     }
 
     //화면 녹화 중지
