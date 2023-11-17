@@ -44,8 +44,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE = 999;
     private int mScreenDensity;
     private MediaProjectionManager mProjectionManager;
-    private static final int DISPLAY_WIDTH = 720;
-    private static final int DISPLAY_HEIGHT = 1280;
+
+    int heightPixels;
+    int widthPixels;
     private MediaProjection mMediaProjection;
     private VirtualDisplay mVirtualDisplay;
     private MediaProjectionCallback mMediaProjectionCallback;
@@ -67,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
             if ("ACTION_PAUSE_RECORDING".equals(intent.getAction())) {
                 // 녹화 일시정지 처리
                pauseRecording();
-                //Toast.makeText(MainActivity.this, "Stop button clicked", Toast.LENGTH_SHORT).show();
             }
 
         }
@@ -92,6 +92,8 @@ public class MainActivity extends AppCompatActivity {
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         mScreenDensity = metrics.densityDpi;
+        widthPixels = metrics.widthPixels;
+        heightPixels = metrics.heightPixels;
 
         mMediaRecorder = new MediaRecorder();
         mProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
@@ -103,11 +105,6 @@ public class MainActivity extends AppCompatActivity {
              if (!isRecording) {
                     startScreenRecording();
                 }
-             else {
-                 stopScreenRecording();
-             }
-
-
             }
         });
 
@@ -136,8 +133,6 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter Sfilter = new IntentFilter("ACTION_STOP_RECORDING");
         registerReceiver(recordingStopReceiver, Sfilter);
     }
-
-
 
     @RequiresApi(api = Build.VERSION_CODES.O)
 //화면 녹화를 시작
@@ -171,7 +166,6 @@ public class MainActivity extends AppCompatActivity {
                 pausedVideoPath = currentVideoPath; // 일시정지된 파일 경로 저장
                 Toast.makeText(this, "녹화가 일시정지되었습니다.", Toast.LENGTH_SHORT).show();
                 sendRecordingStateBroadcast(isRecordingPaused);
-
                 isPaused = true;
             } else {
                 // 녹화 재개
@@ -179,13 +173,10 @@ public class MainActivity extends AppCompatActivity {
                 isRecordingPaused = false;
                 Toast.makeText(this, "녹화가 재개되었습니다.", Toast.LENGTH_SHORT).show();
                 sendRecordingStateBroadcast(isRecordingPaused);
-                // 이미지 변경
-
             }
         }
-
     }
-
+//일시정지 이미지 변경을 위한 브로드캐스트
     private void sendRecordingStateBroadcast(boolean isPaused) {
         Intent intent = new Intent("com.example.ACTION_CHANGE_RECORDING_STATE");
         intent.putExtra("isPaused", isPaused);
@@ -204,30 +195,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
+//파일경로
     private String getNewVideoFilePath() {
-        // 파일 경로 생성 논리를 사용자 정의할 수 있습니다
+
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
         String directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getPath();
         String fileName = "video_" + timeStamp + ".mp4";
         return directory + File.separator + fileName;
     }
 
-//--------------변경------------------------
-//    @RequiresApi(api = Build.VERSION_CODES.O)
-//    public void onToggleScreenShare(View view) {
-//        if (((ToggleButton) view).isChecked()) {
-//            record_intent = new Intent(this,MediaProjectionAccessService.class);
-//            startForegroundService(record_intent);
-//            initRecorder();
-//            shareScreen();
-//        } else {
-//            mMediaRecorder.stop();
-//            mMediaRecorder.reset();
-//            stopScreenSharing();
-//            stopService(record_intent);
-//        }
-//    }
 
 // 플로팅 뷰---------------------------------------
 private void startFloatingViewService() {
@@ -251,9 +227,6 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
             // 권한이 부여되었으면 FloatingViewService 시작
             startFloatingViewService();
-        } else {
-            // 권한이 부여되지 않았으면 사용자에게 알림을 표시하거나 다른 처리를 수행할 수 있습니다.
-            // 여기에 적절한 로직 추가
         }
     }
 }
@@ -271,7 +244,8 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     //녹화할 화면의 가상 디스플레이를 설정
     private VirtualDisplay createVirtualDisplay() {
         return mMediaProjection.createVirtualDisplay("MainActivity",
-                DISPLAY_WIDTH, DISPLAY_HEIGHT, mScreenDensity,
+             //   DISPLAY_WIDTH, DISPLAY_HEIGHT,
+                widthPixels,heightPixels,mScreenDensity,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 mMediaRecorder.getSurface(), null /*Callbacks*/, null
                 /*Handler*/);
@@ -281,19 +255,18 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         try {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP); // 출력 형식을 MPEG_4로 변경
+            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4); // 출력 형식을 MPEG_4로 변경 화질 개선을 위해.
 
             // 파일명에 현재 시간의 타임스탬프 추가
             String currentTime = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
             String outputPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/video_" + currentTime + ".mp4";
 
             mMediaRecorder.setOutputFile(outputPath);
-
-            mMediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+            mMediaRecorder.setVideoSize(widthPixels,heightPixels);
             mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC); // 오디오 인코더도 AAC로 변경하는 것이 좋습니다
-            mMediaRecorder.setVideoEncodingBitRate(512 * 1000);
-            mMediaRecorder.setVideoFrameRate(30);
+            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+            mMediaRecorder.setVideoEncodingBitRate(5000000); // 화질 개선을 위해 바꿈
+            mMediaRecorder.setVideoFrameRate(60); // 화질 개선을 위해 30으로바꿈
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
             int orientation = ORIENTATIONS.get(rotation + 90);
             mMediaRecorder.setOrientationHint(orientation);
@@ -307,7 +280,6 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         @Override
         public void onStop() {
             if (isRecording = true) {
-
                 isRecording = false;
                 mMediaRecorder.stop();
                 mMediaRecorder.reset();

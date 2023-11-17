@@ -21,42 +21,21 @@ public class DrawView extends View {
     private float lastBrushSize;
     private float eraserSize;
     private boolean isEraserActive;
-
     private Paint drawPaint, canvasPaint;
     private Path path;
-
-    private float initialBrushSize = 20; // 초기 펜 굵기
-    private float initialEraserSize = 50; // 초기 지우개 굵기
-
-
     private int paintColor = Color.BLACK; // 기본 색상
     private int backgroundColor = Color.WHITE; // 배경 색상
     private Canvas drawCanvas;
     private Bitmap canvasBitmap;
-    private boolean isDrawingMode = false; // 여기에 변수를 선언합니다.
-    private int menubarX, menubarY, menubarWidth;
+    private boolean isDrawingMode = false;
     private int lastPaintColor;
     private Rect menuBarRect = new Rect();
 
-    public DrawView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        setupDrawing();
-    }
-
-    // 새로운 생성자 추가
     public DrawView(Context context) {
         super(context);
         setupDrawing();
     }
-    public void setDrawingMode(boolean isDrawingMode) {
-        this.isDrawingMode = isDrawingMode;
-    } public void setMenuBarRect(int left, int top, int right, int bottom) {
-        menuBarRect.set(left, top, right, bottom);
-    }
 
-    public boolean isDrawingMode() {
-        return isDrawingMode;
-    }
     private void setupDrawing() {
         // 초기 설정 메소드
         path = new Path();
@@ -65,30 +44,15 @@ public class DrawView extends View {
         lastBrushSize = brushSize; // 마지막 사용된 펜 굵기를 저장
         eraserSize = 50; // 지우개 굵기 초기값
         isEraserActive = false; // 지우개 활성화 상태
-
         drawPaint.setColor(paintColor);
         drawPaint.setAntiAlias(true);
         drawPaint.setStrokeWidth(20); // 기본 굵기 설정
         drawPaint.setStyle(Paint.Style.STROKE);
         drawPaint.setStrokeJoin(Paint.Join.ROUND);
         drawPaint.setStrokeCap(Paint.Cap.ROUND);
-
         canvasPaint = new Paint(Paint.DITHER_FLAG);
     }
 
-
-    public void addToWindow() {
-        WindowManager windowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-                PixelFormat.TRANSLUCENT);
-
-        windowManager.addView(this, params);
-    }
 
     // 굵기 설정 메소드
     public void setBrushSize(float newSize) {
@@ -126,7 +90,7 @@ public class DrawView extends View {
         drawCanvas = new Canvas(canvasBitmap);
     }
     public void clearCanvas() {
-        canvasBitmap.eraseColor(Color.TRANSPARENT); // 또는 backgroundColor 사용
+        canvasBitmap.eraseColor(Color.TRANSPARENT);
         invalidate(); // 뷰 재그리기 요청
     }
     // 그리기 메소드
@@ -139,16 +103,12 @@ public class DrawView extends View {
 
     public void startDrawingMode() {
         isDrawing = true;
-
-
     }
-    // 문자열로 색상을 설정하는 메소드의 이름을 변경합니다.
+
     public void setPaintColor(String newColor) {
         invalidate();
         paintColor = Color.parseColor(newColor);
         drawPaint.setColor(paintColor); // 색상만 변경
-
-
         if (isEraserActive) {
             isEraserActive = false;
             drawPaint.setXfermode(null);

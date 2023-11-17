@@ -50,7 +50,8 @@ public class FloatingViewService extends Service {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.TOP | Gravity.END;
+        params.gravity = Gravity.TOP | Gravity.END|  Gravity.CENTER;
+
         params.x = 0; // Offset from the right edge
         params.y = 0; // Offset from the top
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
@@ -110,38 +111,6 @@ public class FloatingViewService extends Service {
                             }
                         });
 
-//                    // drawView를 WindowManager에 추가
-//                    WindowManager.LayoutParams drawViewParams = new WindowManager.LayoutParams(
-//                            WindowManager.LayoutParams.MATCH_PARENT,
-//                            WindowManager.LayoutParams.MATCH_PARENT,
-//                            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-//                            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-//                            PixelFormat.TRANSLUCENT);
-//                    drawView.startDrawingMode();
-//                    windowManager.addView(drawView, drawViewParams);
-
-                        // 컬러피커의 너비 및 위치 계산
-//                        colorPickerView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-//                            @Override
-//                            public void onGlobalLayout() {
-//                                // 리스너가 더 이상 필요 없으면 제거
-//                                colorPickerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-//
-//                                int colorPickerWidth = colorPickerView.getWidth();
-//                                int colorPickerRightX = colorPickerParams.x + colorPickerWidth - 150;
-//
-//                                // 드로우뷰 너비 조정
-//                                WindowManager.LayoutParams drawViewParams = new WindowManager.LayoutParams(
-//                                        colorPickerRightX, // 너비 조정
-//                                        WindowManager.LayoutParams.MATCH_PARENT,
-//                                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-//                                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-//                                        PixelFormat.TRANSLUCENT);
-//                                // 드로우뷰 추가
-//                                windowManager.addView(drawView, drawViewParams);
-//                            }
-//                        });
-
                         //버튼 선택
                         Button colorButtonBlack = colorPickerView.findViewById(R.id.color_button_black);
                         colorButtonBlack.setOnClickListener(new View.OnClickListener() {
@@ -149,7 +118,6 @@ public class FloatingViewService extends Service {
                             public void onClick(View v) {
                                 // DrawView의 펜 색상을 검정색으로 설정
                                 drawView.setPaintColor("#000000");
-
                                 drawView.startDrawingMode();
                             }
                         });
@@ -158,8 +126,7 @@ public class FloatingViewService extends Service {
                             @Override
                             public void onClick(View v) {
                                 drawView.setPaintColor("#FFCDD2");
-
-                                // 그림 그리기 모드로 전환합니다.
+                                // 그림 그리기 모드로 전환
                                 drawView.startDrawingMode();
                             }
                         });
@@ -168,8 +135,6 @@ public class FloatingViewService extends Service {
                             @Override
                             public void onClick(View v) {
                                 drawView.setPaintColor("#3D5AFE");
-                                // DrawView를 화면에 추가
-
                                 drawView.startDrawingMode();
                             }
                         });
@@ -217,8 +182,6 @@ public class FloatingViewService extends Service {
                         drawView.setVisibility(View.GONE);
 
                     }
-                    // drawView의 캔버스 클리어
-
                     isFloatingViewVisible = false;
                 }
             }
@@ -227,37 +190,21 @@ public class FloatingViewService extends Service {
         pauseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 // 브로드캐스트 보내기
                 Intent intent = new Intent("ACTION_PAUSE_RECORDING");
                 sendBroadcast(intent);
-
-
             }
         });
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-//                        if (colorPickerView != null) {
-//                            windowManager.removeView(colorPickerView);
-//                            colorPickerView = null;
-//                        }
-//                        // drawView의 캔버스 클리어
-//                        drawView.clearCanvas();
-//                        drawView.setVisibility(View.GONE);
-//                        isFloatingViewVisible = false;
-//                        stopSelf(); // Stop the service
                 if (colorPickerView != null) {
                     colorPickerView.setVisibility(View.GONE);
                     drawView.clearCanvas();
                     drawView.setVisibility(View.GONE);
-                    Intent intent = new Intent("ACTION_STOP_RECORDING");
-                    sendBroadcast(intent);
-
-                }
-
-
+                                 }
+                Intent intent = new Intent("ACTION_STOP_RECORDING");
+                sendBroadcast(intent);
             }
         });
         IntentFilter filter = new IntentFilter("com.example.ACTION_CHANGE_RECORDING_STATE");
@@ -265,51 +212,41 @@ public class FloatingViewService extends Service {
     }
 
 
-//    private void updatePauseButton(boolean isPaused) {
-//        // 이미지 뷰의 크기를 조정할 LayoutParams 객체 생성
-//        ViewGroup.LayoutParams params = pauseButton.getLayoutParams();
-//
-//        if (isPaused) {
-//            // 이미지를 rred로 변경하고 크기 조정
-//            pauseButton.setImageResource(R.drawable.rred);
-//
-//            // 원하는 크기로 설정 (예: 너비 50dp, 높이 50dp)
-//            int sizeInDp = 30;
-//            float scale = getResources().getDisplayMetrics().density;
-//            int sizeInPx = (int) (sizeInDp * scale + 0.5f); // dp를 픽셀로 변환
-//            params.width = sizeInPx;
-//            params.height = sizeInPx;
-//            params.gravity = Gravity.CENTER;
-//        } else {
-//            // 이미지를 ic_pause로 변경하고 원래 크기로 복원
-//            pauseButton.setImageResource(R.drawable.ic_pause);
-//
-//            // 원래 크기로 설정 (예: 원래 크기)
-//            int sizeInDp = 40;
-//            float scale = getResources().getDisplayMetrics().density;
-//            int sizeInPx = (int) (sizeInDp * scale + 0.5f); // dp를 픽셀로 변환
-//            params.width = sizeInPx;
-//            params.height = sizeInPx;
-//        }
-//
-//        // 변경된 크기 적용
-//        pauseButton.setLayoutParams(params);
-//    }
-private void updatePauseButton(boolean isPaused) {
-    if (isPaused) {
-        pauseButton.setImageResource(R.drawable.rred);
-    } else {
-        pauseButton.setImageResource(R.drawable.ic_pause);
+    private void updatePauseButton(boolean isPaused) {
+        // 이미지 뷰의 크기를 조정할 LayoutParams 객체 생성
+        ViewGroup.LayoutParams params = pauseButton.getLayoutParams();
+
+        if (isPaused) {
+            // 이미지를 rred로 변경하고 크기 조정
+            pauseButton.setImageResource(R.drawable.rred);
+
+            // 원하는 크기로 설정 (예: 너비 50dp, 높이 50dp)
+            int sizeInDp = 25;
+            float scale = getResources().getDisplayMetrics().density;
+            int sizeInPx = (int) (sizeInDp * scale + 0.5f); // dp를 픽셀로 변환
+            params.width = sizeInPx;
+            params.height = sizeInPx;
+
+        } else {
+            // 이미지를 ic_pause로 변경하고 원래 크기로 복원
+            pauseButton.setImageResource(R.drawable.ic_pause);
+
+            // 원래 크기로 설정
+            int sizeInDp = 40;
+            float scale = getResources().getDisplayMetrics().density;
+            int sizeInPx = (int) (sizeInDp * scale + 0.5f); // dp를 픽셀로 변환
+            params.width = sizeInPx;
+            params.height = sizeInPx;
+        }
+
+        // 변경된 크기 적용
+        pauseButton.setLayoutParams(params);
     }
-}
 
     @Override
 
     public void onDestroy() {
-//        if (drawView != null && drawView.getParent() != null) {
-//            WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-//            windowManager.removeView(drawView);
-//        }
+
         if (floatingView != null && floatingView.getParent() != null) {
             windowManager.removeView(floatingView); // FloatingView 제거
         }
