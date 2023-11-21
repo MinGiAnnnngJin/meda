@@ -7,18 +7,23 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class FloatingViewService extends Service {
     private WindowManager windowManager;
+    private Chronometer chronometer;
+    private long pauseOffset = 0; // Time elapsed before the pause
+    private boolean isChronometerRunning = false;
     private View floatingView;
     private DrawView drawView;
     private View colorPickerView;
@@ -32,8 +37,6 @@ public class FloatingViewService extends Service {
             updatePauseButton(isPaused);
         }
     };
-
-
     @Override
     public IBinder onBind(Intent intent) {
         return null; // Binding not used
@@ -60,6 +63,10 @@ public class FloatingViewService extends Service {
         ImageButton writeButton = floatingView.findViewById(R.id.write_button);
         pauseButton = floatingView.findViewById(R.id.pause_button);
         ImageButton stopButton = floatingView.findViewById(R.id.stop_button);
+        Chronometer chronometer = floatingView.findViewById(R.id.chronometer);
+        chronometer.setBase(SystemClock.elapsedRealtime());
+        chronometer.start();
+        isChronometerRunning = true;
         menubar.setVisibility(View.VISIBLE);
         //---여기까지 메뉴바 설정 ------
 
@@ -193,11 +200,26 @@ public class FloatingViewService extends Service {
                 // 브로드캐스트 보내기
                 Intent intent = new Intent("ACTION_PAUSE_RECORDING");
                 sendBroadcast(intent);
+                if (isChronometerRunning) {
+                    pauseOffset = SystemClock.elapsedRealtime() - chronometer.getBase();
+                    chronometer.stop();
+                    isChronometerRunning = false;
+                } else {
+                    chronometer.setBase(SystemClock.elapsedRealtime() - pauseOffset);
+                    chronometer.start();
+                    isChronometerRunning = true;
+                }
             }
         });
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                chronometer.setBase(SystemClock.elapsedRealtime());
+                pauseOffset = 0;
+                if (isChronometerRunning) {
+                    chronometer.stop();
+                    isChronometerRunning = false;
+                }
                 if (colorPickerView != null) {
                     colorPickerView.setVisibility(View.GONE);
                     drawView.clearCanvas();
@@ -205,6 +227,7 @@ public class FloatingViewService extends Service {
                                  }
                 Intent intent = new Intent("ACTION_STOP_RECORDING");
                 sendBroadcast(intent);
+
             }
         });
         IntentFilter filter = new IntentFilter("com.example.ACTION_CHANGE_RECORDING_STATE");
